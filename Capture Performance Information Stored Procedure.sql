@@ -53,12 +53,12 @@ CREATE TABLE performance.IOStallsByFile
 -- Calculates average stalls per read, per write, and per total input/output for each database file
 INSERT performance.IOStallsByFile
 SELECT 
-    CaptureDate	    =   GETDATE(),
+    CaptureDate	        =   GETDATE(),
     DatabaseName	    =   DB_NAME(fs.database_id), 
     AvgReadStall_ms	    =   CAST(fs.io_stall_read_ms/(1.0 + fs.num_of_reads) AS NUMERIC(10,1)),
     AvgWriteStall_ms    =   CAST(fs.io_stall_write_ms/(1.0 + fs.num_of_writes) AS NUMERIC(10,1)),
     AvgIOStall_ms	    =   CAST((fs.io_stall_read_ms + fs.io_stall_write_ms)/(1.0 + fs.num_of_reads + fs.num_of_writes) AS NUMERIC(10,1)),
-    FileSize_mb	    =   CONVERT(DECIMAL(18,2), mf.size/128.0), 
+    FileSize_mb	        =   CONVERT(DECIMAL(18,2), mf.size/128.0), 
     PhysicalName	    =   mf.physical_name, 
     FileType		    =   mf.type_desc, 
     IOStallRead_ms	    =   fs.io_stall_read_ms, 
@@ -66,7 +66,7 @@ SELECT
     IOStallWrite_ms	    =   fs.io_stall_write_ms, 
     NumberOfWrites	    =   fs.num_of_writes, 
     IOStalls		    =   fs.io_stall_read_ms + fs.io_stall_write_ms, 
-    TotalIO		    =   fs.num_of_reads + fs.num_of_writes
+    TotalIO		        =   fs.num_of_reads + fs.num_of_writes
 FROM sys.dm_io_virtual_file_stats(null,null) AS fs
     INNER JOIN sys.master_files AS mf WITH (NOLOCK) ON fs.database_id = mf.database_id AND fs.[file_id] = mf.[file_id]
 ORDER BY AvgIOStall_ms DESC OPTION (RECOMPILE);
