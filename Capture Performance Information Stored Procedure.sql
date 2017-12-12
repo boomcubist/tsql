@@ -93,7 +93,7 @@ The following is a list of useful indexes.
 CREATE TABLE performance.MissingIndexes
 (
     CaptureID		    INT IDENTITY(1,1),
-    CaptureDate	    DATETIME,
+    CaptureDate	        DATETIME,
     IndexAdvantage	    DECIMAL(18,2),
     LastUserSeek	    DATETIME,
     TableName		    VARCHAR(500),
@@ -109,7 +109,7 @@ CREATE TABLE performance.MissingIndexes
 -- Missing Indexes for all databases by Index Advantage (Missing Indexes All Databases)
 INSERT performance.MissingIndexes
 SELECT 
-    CaptureDate	    =   GETDATE(),
+    CaptureDate	        =   GETDATE(),
     IndexAdvantage	    =   CONVERT(decimal(18,2),user_seeks * avg_total_user_cost * (avg_user_impact * 0.01)),
     LastUserSeek	    =   migs.last_user_seek, 
     TableName		    =   mid.[statement],
@@ -136,23 +136,25 @@ ORDER BY IndexAdvantage DESC OPTION (RECOMPILE);
 CREATE TABLE performance.MissingIndexWarnings
 (
     CaptureID		    INT IDENTITY(1,1),
-    CaptureDate	    DATETIME,
+    CaptureDate	        DATETIME,
     ObjectName		    VARCHAR(500),
     ObjectType		    VARCHAR(500),
     UseCount		    INT,
-    Size_b		    INT,
+    Size_b		        INT,
     QueryPlan		    XML
 )
 
 
 -- Find missing index warnings for cached plans in the current database   (Missing Index Warnings)
 -- Note: This query could take some time on a busy instance
+INSERT performance.MissingIndexWarnings
 SELECT TOP(25) 
-    OBJECT_NAME(objectid) AS [ObjectName], 
-    cp.objtype, 
-    cp.usecounts, 
-    cp.size_in_bytes, 
-    query_plan
+    CaptureDate     =   GETDATE(),
+    [ObjectName]    =   OBJECT_NAME(objectid), 
+    ObjectType      =   cp.objtype, 
+    UseCount        =   cp.usecounts, 
+    Size_b          =   cp.size_in_bytes, 
+    QueryPlan       =   query_plan
 FROM sys.dm_exec_cached_plans AS cp WITH (NOLOCK)
     CROSS APPLY sys.dm_exec_query_plan(cp.plan_handle) AS qp
 WHERE CAST(query_plan AS NVARCHAR(MAX)) LIKE N'%MissingIndex%'
@@ -164,20 +166,42 @@ ORDER BY cp.usecounts DESC OPTION (RECOMPILE);
 
 CREATE TABLE performance.VolatileIndexes
 (
-    CaptureID		    INT IDENTITY(1,1),
-    CaptureDate	    DATETIME    
+    CaptureID		        INT IDENTITY(1,1),
+    CaptureDate	            DATETIME,
+    ObjectName              VARCHAR(100),
+    ObjectID                INT,
+    TypeDesc                VARCHAR(500),
+    StatisticsName          VARCHAR(500),
+    StatisticsID            INT,
+    [NoRecompute]           BIT,
+    AutoCreated             BIT,
+    IsTemporary             BIT,
+    ModificationCounter     SMALLINT,
+    NumberOfRows            INT,
+    NumberOfRowsSampled     INT,
+    DateLastUpdated         DATETIME
 )
 
 -- Look at most frequently modified indexes and statistics (Volatile Indexes)
-SELECT o.[name] AS [Object Name], o.[object_id], o.[type_desc], s.[name] AS [Statistics Name], 
-       s.stats_id, s.no_recompute, s.auto_created, s.is_temporary,
-	   sp.modification_counter, sp.[rows], sp.rows_sampled, sp.last_updated
+INSERT performance.VolatileIndexes
+SELECT 
+    [Object Name]       = o.[name], 
+    o.[object_id], 
+    o.[type_desc], 
+    [Statistics Name]   = s.[name], 
+    s.stats_id, 
+    s.no_recompute, 
+    s.auto_created, 
+    s.is_temporary,
+	sp.modification_counter, 
+    sp.[rows], 
+    sp.rows_sampled, 
+    sp.last_updated
 FROM sys.objects AS o WITH (NOLOCK)
-INNER JOIN sys.stats AS s WITH (NOLOCK)
-ON s.object_id = o.object_id
-CROSS APPLY sys.dm_db_stats_properties(s.object_id, s.stats_id) AS sp
+    INNER JOIN sys.stats AS s WITH (NOLOCK) ON s.object_id = o.object_id
+    CROSS APPLY sys.dm_db_stats_properties(s.object_id, s.stats_id) AS sp
 WHERE o.[type_desc] NOT IN (N'SYSTEM_TABLE', N'INTERNAL_TABLE')
-AND sp.modification_counter > 0
+    AND sp.modification_counter > 0
 ORDER BY sp.modification_counter DESC, o.name OPTION (RECOMPILE);
 ------
 
@@ -188,19 +212,25 @@ ORDER BY sp.modification_counter DESC, o.name OPTION (RECOMPILE);
 
 -- Get fragmentation info for all indexes above a certain size in the current database   (Index Fragmentation)
 -- Note: This query could take some time on a very large database
-SELECT DB_NAME(ps.database_id) AS [Database Name], SCHEMA_NAME(o.[schema_id]) AS [Schema Name],
-OBJECT_NAME(ps.OBJECT_ID) AS [Object Name], i.[name] AS [Index Name], ps.index_id, 
-ps.index_type_desc, ps.avg_fragmentation_in_percent, 
-ps.fragment_count, ps.page_count, i.fill_factor, i.has_filter, 
-i.filter_definition, i.[allow_page_locks]
+SELECT 
+    DB_NAME(ps.database_id) AS [Database Name], 
+    SCHEMA_NAME(o.[schema_id]) AS [Schema Name],
+    OBJECT_NAME(ps.OBJECT_ID) AS [Object Name], 
+    i.[name] AS [Index Name], 
+    ps.index_id, 
+    ps.index_type_desc, 
+    ps.avg_fragmentation_in_percent, 
+    ps.fragment_count, 
+    ps.page_count, 
+    i.fill_factor, 
+    i.has_filter, 
+    i.filter_definition, 
+    i.[allow_page_locks]
 FROM sys.dm_db_index_physical_stats(DB_ID(),NULL, NULL, NULL , N'LIMITED') AS ps
-INNER JOIN sys.indexes AS i WITH (NOLOCK)
-ON ps.[object_id] = i.[object_id] 
-AND ps.index_id = i.index_id
-INNER JOIN sys.objects AS o WITH (NOLOCK)
-ON i.[object_id] = o.[object_id]
+    INNER JOIN sys.indexes AS i WITH (NOLOCK) ON ps.[object_id] = i.[object_id] AND ps.index_id = i.index_id
+    INNER JOIN sys.objects AS o WITH (NOLOCK) ON i.[object_id] = o.[object_id]
 WHERE ps.database_id = DB_ID()
-AND ps.page_count > 2500
+    AND ps.page_count > 2500
 ORDER BY ps.avg_fragmentation_in_percent DESC OPTION (RECOMPILE);
 ------
 
