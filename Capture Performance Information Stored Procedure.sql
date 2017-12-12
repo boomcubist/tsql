@@ -1,3 +1,11 @@
+-- Create the schema first. 
+
+USE [ServerMonitor]
+GO
+CREATE SCHEMA [performance] AUTHORIZATION [dbo]
+GO
+
+
 -- determine the SQL Server version
 
 
@@ -25,12 +33,12 @@ This should be corroborated with Performance Monitor counters Physical Disk: Ave
 CREATE TABLE performance.IOStallsByFile
 (
     CaptureID		    INT IDENTITY(1,1),
-    CaptureDate	    DATETIME,
+    CaptureDate	        DATETIME,
     DatabaseName	    VARCHAR(120),
     AvgReadStall_ms	    NUMERIC(10,1),
     AvgWriteStall_ms    NUMERIC(10,1),
     AvgIOStall_ms	    NUMERIC(10,1),
-    FileSize_mb	    DECIMAL(18,2), 
+    FileSize_mb	        DECIMAL(18,2), 
     PhysicalName	    VARCHAR(1000),
     FileType		    VARCHAR(4), 
     IOStallRead_ms	    INT, 
@@ -38,7 +46,7 @@ CREATE TABLE performance.IOStallsByFile
     IOStallWrite_ms	    INT, 
     NumberOfWrites	    INT, 
     IOStalls		    INT, 
-    TotalIO		    INT
+    TotalIO		        INT
 )
 
 
@@ -123,6 +131,7 @@ ORDER BY IndexAdvantage DESC OPTION (RECOMPILE);
 -- Also look at avg_user_impact and avg_total_user_cost to help determine importance
 -- SQL Server is overly eager to add included columns, so beware
 -- Do not just blindly add indexes that show up from this query!!!
+-- to do.
 
 CREATE TABLE performance.MissingIndexWarnings
 (
