@@ -1,3 +1,7 @@
+--create database first
+CREATE DATABASE ServerMonitor;
+GO
+
 -- Create the schema first. 
 
 USE [ServerMonitor]
@@ -52,6 +56,7 @@ CREATE TABLE performance.IOStallsByFile
 
 
 -- Calculates average stalls per read, per write, and per total input/output for each database file
+-- works on MacOS
 INSERT performance.IOStallsByFile
 SELECT 
     CaptureDate	        =   GETDATE(),
