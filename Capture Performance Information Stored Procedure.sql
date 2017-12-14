@@ -7,6 +7,7 @@ GO
 
 
 -- determine the SQL Server version
+-- ability to run on Linux too. 
 
 
 -- Typical resource bottlenecks
