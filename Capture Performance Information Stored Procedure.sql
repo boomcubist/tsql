@@ -34,6 +34,7 @@ Average IO Waits per read or write can distinguish between consistently high IO 
 A significantly higher average value for IO stalls on one particular drive indicates consistently high IO requests. 
 This should be corroborated with Performance Monitor counters Physical Disk: Average Disk Seconds/Read and Average Disk Seconds/Write.  
 */
+DROP TABLE IF EXISTS performance.IOStallsByFile
 
 CREATE TABLE performance.IOStallsByFile
 (
@@ -96,6 +97,8 @@ individual query only where the maintenance cost is borne by inserts, updates, a
 The following is a list of useful indexes.
 
 */
+DROP TABLE IF EXISTS performance.MissingIndexes
+
 CREATE TABLE performance.MissingIndexes
 (
     CaptureID		    INT IDENTITY(1,1),
@@ -139,6 +142,8 @@ ORDER BY IndexAdvantage DESC OPTION (RECOMPILE);
 -- Do not just blindly add indexes that show up from this query!!!
 -- to do.
 
+DROP TABLE IF EXISTS performance.MissingIndexWarnings
+
 CREATE TABLE performance.MissingIndexWarnings
 (
     CaptureID		    INT IDENTITY(1,1),
@@ -169,6 +174,7 @@ ORDER BY cp.usecounts DESC OPTION (RECOMPILE);
 
 -- Helps you connect missing indexes to specific stored procedures or queries
 -- This can help you decide whether to add them or not
+DROP TABLE IF EXISTS performance.VolatileIndexes
 
 CREATE TABLE performance.VolatileIndexes
 (
@@ -218,6 +224,8 @@ ORDER BY sp.modification_counter DESC, o.name OPTION (RECOMPILE);
 
 -- Get fragmentation info for all indexes above a certain size in the current database   (Index Fragmentation)
 -- Note: This query could take some time on a very large database
+
+
 SELECT 
     DB_NAME(ps.database_id) AS [Database Name], 
     SCHEMA_NAME(o.[schema_id]) AS [Schema Name],
