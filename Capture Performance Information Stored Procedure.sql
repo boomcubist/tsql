@@ -224,8 +224,26 @@ ORDER BY sp.modification_counter DESC, o.name OPTION (RECOMPILE);
 
 -- Get fragmentation info for all indexes above a certain size in the current database   (Index Fragmentation)
 -- Note: This query could take some time on a very large database
+DROP TABLE IF EXISTS performance.IndexFragmentation
 
+CREATE TABLE performance.IndexFragmentation
+(
+    DatabaseName VARCHAR(100),
+    SchemaName VARCHAR(100),
+    ObjectName VARCHAR(100),
+    IndexName VARCHAR(100),
+    IndexID TINYINT,
+    IndexType VARCHAR(100),
+    AverageFragmentationInPercent DECIMAL(10,4),
+    FragmentCount INT,
+    [PageCount] INT, 
+    [FillFactor] TINYINT,
+    HasFilter BIT,
+    FilterDefinition VARCHAR(100),
+    AllowPageLocks BIT
+)
 
+INSERT performance.IndexFragmentation
 SELECT 
     DB_NAME(ps.database_id) AS [Database Name], 
     SCHEMA_NAME(o.[schema_id]) AS [Schema Name],
