@@ -1,13 +1,13 @@
 --create database first
+IF (SELECT COUNT(*) FROM sys.databases WHERE name = 'ServerMoitor') > 0
 CREATE DATABASE ServerMonitor;
 GO
 
 -- Create the schema first. 
-
 USE [ServerMonitor]
 GO
-CREATE SCHEMA [performance] AUTHORIZATION [dbo]
-GO
+--CREATE SCHEMA [performance] AUTHORIZATION [dbo]
+--GO
 
 
 -- determine the SQL Server version
@@ -188,7 +188,7 @@ CREATE TABLE performance.VolatileIndexes
     [NoRecompute]           BIT,
     AutoCreated             BIT,
     IsTemporary             BIT,
-    ModificationCounter     SMALLINT,
+    ModificationCounter     INT,
     NumberOfRows            INT,
     NumberOfRowsSampled     INT,
     DateLastUpdated         DATETIME
@@ -197,6 +197,7 @@ CREATE TABLE performance.VolatileIndexes
 -- Look at most frequently modified indexes and statistics (Volatile Indexes)
 INSERT performance.VolatileIndexes
 SELECT 
+    GETDATE(),
     [Object Name]       = o.[name], 
     o.[object_id], 
     o.[type_desc], 
@@ -228,6 +229,7 @@ DROP TABLE IF EXISTS performance.IndexFragmentation
 
 CREATE TABLE performance.IndexFragmentation
 (
+    CaptureDate DATETIME,
     DatabaseName VARCHAR(100),
     SchemaName VARCHAR(100),
     ObjectName VARCHAR(100),
@@ -245,6 +247,7 @@ CREATE TABLE performance.IndexFragmentation
 
 INSERT performance.IndexFragmentation
 SELECT 
+    GETDATE(),
     DB_NAME(ps.database_id) AS [Database Name], 
     SCHEMA_NAME(o.[schema_id]) AS [Schema Name],
     OBJECT_NAME(ps.OBJECT_ID) AS [Object Name], 
@@ -274,6 +277,7 @@ DROP TABLE IF EXISTS performance.StatisticsUpdate
 
 CREATE TABLE performance.StatisticsUpdate
 (
+    CaptureDate DATETIME,
     ObjectName VARCHAR(100),
     ObjectType VARCHAR(100),
     IndexName VARCHAR(100),
@@ -289,6 +293,7 @@ CREATE TABLE performance.StatisticsUpdate
 -- When were Statistics last updated on all indexes?   (Statistics Update)
 INSERT performance.StatisticsUpdate
 SELECT 
+    GETDATE(),
     SCHEMA_NAME(o.Schema_ID) + N'.' + o.NAME AS [Object Name], 
     o.type_desc AS [Object Type],
     i.name AS [Index Name], 
