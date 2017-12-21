@@ -270,9 +270,24 @@ ORDER BY ps.avg_fragmentation_in_percent DESC OPTION (RECOMPILE);
 -- and how effective your index maintenance strategy is
 
 
+DROP TABLE IF EXISTS performance.StatisticsUpdate
 
+CREATE TABLE performance.StatisticsUpdate
+(
+    ObjectName VARCHAR(100),
+    ObjectType VARCHAR(100),
+    IndexName VARCHAR(100),
+    StatisticsDate DATETIME,
+    AutoCreated BIT,
+    [NoRecompute] BIT,
+    UserCreated BIT,
+    IsTemporary BIT,
+    [RowCount] INT,
+    UsedPageCount INT
+)
 
 -- When were Statistics last updated on all indexes?   (Statistics Update)
+INSERT performance.StatisticsUpdate
 SELECT 
     SCHEMA_NAME(o.Schema_ID) + N'.' + o.NAME AS [Object Name], 
     o.type_desc AS [Object Type],
